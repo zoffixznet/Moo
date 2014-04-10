@@ -1,5 +1,6 @@
 Revision history for Moo
 
+  - existing attributes will no longer be overwritten when composing roles
   - Name the ->DOES method installed by Role::Tiny
   - don't apply threading workarounds on non-threaded perls, even if module for
     it is loaded by something

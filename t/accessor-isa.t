@@ -124,6 +124,15 @@ is(
 is(LazyFoo->new->less_than_three, 2, 'Correct builder value returned ok');
 
 {
+  package MyException;
+  use Moo;
+  has attribute_data => ( is => 'rw' );
+  sub _attribute_data {
+    my $self = shift;
+    $self->attribute_data({ @_ });
+  }
+}
+{
   package Fizz;
 
   use Moo;
@@ -131,9 +140,7 @@ is(LazyFoo->new->less_than_three, 2, 'Correct builder value returned ok');
   has attr1 => (
     is => 'ro',
     isa => sub {
-      no warnings 'once';
-      my $attr = $Method::Generate::Accessor::CurrentAttribute;
-      die bless [@$attr{'name', 'init_arg', 'step'}], 'MyException';
+      die MyException->new;
     },
     init_arg => 'attr_1',
   );
@@ -146,9 +153,9 @@ is(
   'Exception objects passed though correctly',
 );
 
-is($e->[0], 'attr1', 'attribute name available in isa check');
-is($e->[1], 'attr_1', 'attribute init_arg available in isa check');
-is($e->[2], 'isa check', 'step available in isa check');
+is($e->attribute_data->{name}, 'attr1', 'attribute name available in isa check');
+is($e->attribute_data->{init_arg}, 'attr_1', 'attribute init_arg available in isa check');
+is($e->attribute_data->{step}, 'isa check', 'step available in isa check');
 
 {
   my $called;

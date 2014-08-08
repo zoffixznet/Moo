@@ -427,7 +427,7 @@ sub _wrap_attr_exception {
   ."      1;\n"
   ."    }) {\n"
   .'      $_error = $@;'."\n"
-  .'      if (blessed $_error && $_error->can("_attribute_data")) {'."\n"
+  .'      if (Scalar::Util::blessed($_error) && $_error->can("_attribute_data")) {'."\n"
   .'        $_error->_attribute_data('
   .'          init_arg => '.quotify($arg).",\n"
   .'          name     => '.quotify($name).",\n"

@@ -416,11 +416,6 @@ sub _wrap_attr_exception {
   my ($self, $name, $step, $arg, $code, $want_return) = @_;
   my $prefix = quotify("${step} for "._attr_desc($name, $arg).' failed: ');
   "do {\n"
-  .'  local $Method::Generate::Accessor::CurrentAttribute = {'."\n"
-  .'    init_arg => '.quotify($arg).",\n"
-  .'    name     => '.quotify($name).",\n"
-  .'    step     => '.quotify($step).",\n"
-  ."  };\n"
   .($want_return ? '  my $_return;'."\n" : '')
   .'  my $_error;'."\n"
   ."  {\n"
@@ -432,7 +427,14 @@ sub _wrap_attr_exception {
   ."      1;\n"
   ."    }) {\n"
   .'      $_error = $@;'."\n"
-  .'      if (!ref $_error) {'."\n"
+  .'      if (blessed $_error && $_error->can("_attribute_data")) {'."\n"
+  .'        $_error->_attribute_data('
+  .'          init_arg => '.quotify($arg).",\n"
+  .'          name     => '.quotify($name).",\n"
+  .'          step     => '.quotify($step).",\n"
+  .'        );'."\n"
+  ."      }\n"
+  .'      elsif (!ref $_error) {'."\n"
   .'        $_error = '.$prefix.'.$_error;'."\n"
   ."      }\n"
   ."    }\n"

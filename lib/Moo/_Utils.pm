@@ -29,6 +29,31 @@ our @EXPORT = qw(
     _unimport_coderefs _in_global_destruction _set_loaded
 );
 
+our @EXPORT_OK = qw(
+  @CARP_NOT
+);
+
+our @CARP_NOT = qw(
+  Moo
+  Moo::HandleMoose
+  Moo::HandleMoose::FakeMetaClass
+  Moo::HandleMoose::_TypeMap
+  Moo::Object
+  Moo::Role
+  Moo::_Utils
+  Moo::_mro
+  Moo::_strictures
+  Moo::sification
+  Method::Generate::Accessor
+  Method::Generate::BuildAll
+  Method::Generate::Constructor
+  Method::Generate::DemolishAll
+  Method::Inliner
+  Sub::Defer
+  Sub::Quote
+  oo
+);
+
 sub _in_global_destruction ();
 *_in_global_destruction = \&Devel::GlobalDestruction::in_global_destruction;
 
@@ -60,7 +85,7 @@ sub _load_module {
   return 1
     if $INC{"Moose.pm"} && Class::MOP::class_of($module)
     or Mouse::Util->can('find_meta') && Mouse::Util::find_meta($module);
-  die $error;
+  croak $error;
 }
 
 sub _maybe_load_module {

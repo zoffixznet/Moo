@@ -3,8 +3,9 @@ package Method::Generate::Constructor;
 use Moo::_strictures;
 use Sub::Quote qw(quote_sub unquote_sub quotify);
 use Sub::Defer;
-use Moo::_Utils qw(_getstash _getglob);
+use Moo::_Utils qw(_getstash _getglob @CARP_NOT);
 use Moo;
+use Carp qw(croak);
 
 sub register_attribute_specs {
   my ($self, @new_specs) = @_;
@@ -12,7 +13,7 @@ sub register_attribute_specs {
   my $specs = $self->{attribute_specs}||={};
   while (my ($name, $new_spec) = splice @new_specs, 0, 2) {
     if ($name =~ s/^\+//) {
-      die "has '+${name}' given but no ${name} attribute already exists"
+      croak "has '+${name}' given but no ${name} attribute already exists"
         unless my $old_spec = $specs->{$name};
       foreach my $key (keys %$old_spec) {
         if (!exists $new_spec->{$key}) {
@@ -34,7 +35,7 @@ sub register_attribute_specs {
         || defined $new_spec->{init_arg}
       )
     ) {
-      die "You cannot have a required attribute (${name})"
+      croak "You cannot have a required attribute (${name})"
         . " without a default, builder, or an init_arg";
     }
     $new_spec->{index} = scalar keys %$specs
@@ -86,7 +87,7 @@ sub install_delayed {
       if (($found_new||'') ne ($expected_new||'')) {
         $found_new ||= 'none';
         $expected_new ||= 'none';
-        die "Expected parent constructor of $package to be"
+        croak "Expected parent constructor of $package to be"
         . " $expected_new, but found $found_new: changing the inheritance"
         . " chain (\@ISA) at runtime is unsupported";
       }
@@ -109,14 +110,14 @@ sub assert_constructor {
   my $current = $self->current_constructor($package)
     or return 1;
   my $deferred = $self->{deferred_constructor}
-    or die "Unknown constructor for $package already exists";
+    or croak "Unknown constructor for $package already exists";
   return 1
     if $deferred == $current;
   my $current_deferred = (Sub::Defer::defer_info($current)||[])->[3];
   if ($current_deferred && $current_deferred == $deferred) {
-    die "Constructor for $package has been inlined and cannot be updated";
+    croak "Constructor for $package has been inlined and cannot be updated";
   }
-  die "Constructor for $package has been replaced with an unknown sub";
+  croak "Constructor for $package has been replaced with an unknown sub";
 }
 
 sub generate_method {
@@ -172,7 +173,7 @@ sub _cap_call {
 sub _generate_args_via_buildargs {
   my ($self) = @_;
   q{    my $args = $class->BUILDARGS(@_);}."\n"
-  .q{    die "BUILDARGS did not return a hashref" unless ref($args) eq 'HASH';}
+  .q{    Carp::croak("BUILDARGS did not return a hashref") unless ref($args) eq 'HASH';}
   ."\n";
 }
 
@@ -183,11 +184,11 @@ sub _generate_args {
     my $args = scalar @_ == 1
       ? ref $_[0] eq 'HASH'
         ? { %{ $_[0] } }
-        : die "Single parameters to new() must be a HASH ref"
-            . " data => ". $_[0] ."\n"
+        : Carp::croak("Single parameters to new() must be a HASH ref"
+            . " data => ". $_[0] ."\n")
       : @_ % 2
-        ? die "The new() method for $class expects a hash reference or a"
-            . " key/value list. You passed an odd number of arguments\n"
+        ? Carp::croak("The new() method for $class expects a hash reference or a"
+            . " key/value list. You passed an odd number of arguments\n")
         : {@_}
     ;
 _EOA
@@ -226,7 +227,7 @@ sub _check_required {
   return '' unless @required_init;
   '    if (my @missing = grep !exists $args->{$_}, '
     .join(', ', map quotify($_), @required_init).') {'."\n"
-    .q{      die "Missing required arguments: ".join(', ', sort @missing);}."\n"
+    .q{      Carp::croak("Missing required arguments: ".join(', ', sort @missing));}."\n"
     ."    }\n";
 }
 

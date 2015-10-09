@@ -9,7 +9,7 @@ BEGIN {
   defined &Sub::Util::set_subname or *Sub::Util::set_subname = sub {};
 }
 
-use Moo::_Utils;
+use Moo::_Utils ();
 
 ok( Moo::_Utils::can_haz_subname || Moo::_Utils::can_haz_subutil,
   "one of can_haz_subname or can_haz_subutil set with both loaded"
